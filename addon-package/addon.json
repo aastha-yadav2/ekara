@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.amazon.com/schemas/alexa-ai/addon-manifest-schema.json",
+  "name": "EKARA",
+  "shortDescription": "Intelligent support for safer, more independent living.",
+  "fullDescription": "EKARA is an AI voice-first assistance platform designed for older adults living independently. It provides daily schedule and routine information, simulated smart home front door telemetry, and safe caregiver alert logging.",
+  "examplePhrases": [
+    "What do I need to do today?",
+    "Is anyone at my front door?",
+    "Tell my daughter I need help."
+  ],
+  "category": "ORGANIZERS_AND_ASSISTANTS",
+  "keywords": [
+    "senior care",
+    "voice assistant",
+    "independent living",
+    "medication schedule",
+    "front door",
+    "caregiver"
+  ],
+  "integrations": [
+    {
+      "type": "MCP",
+      "config": {
+        "endpoints": {
+          "default": {
+            "type": "HTTPS",
+            "uri": "https://<public-domain>/mcp"
+          }
+        }
+      }
+    }
+  ],
+  "privacyAndCompliance": {
+    "isChildDirected": false,
+    "containsAds": false,
+    "isExportCompliant": true
+  }
+}
