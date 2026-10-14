@@ -79,7 +79,7 @@ export const App: React.FC = () => {
     routineStatus: 'ready',
     routineDetail: 'Ready to review medications and activities.',
     frontDoorStatus: 'ready',
-    frontDoorDetail: 'Porch sensor telemetry available on request.',
+    frontDoorDetail: 'Front Porch: Locked • No motion detected • Telemetry clear.',
     caregiverStatus: 'connected',
     caregiverDetail: 'Designated contact: Sarah (Daughter) via Family App.',
   });

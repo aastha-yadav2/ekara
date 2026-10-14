@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, DoorClosed, HeartHandshake, Info } from 'lucide-react';
+import { Calendar, DoorClosed, HeartHandshake } from 'lucide-react';
 import type { StatusCardState } from '../types/assistant';
 
 interface StatusCardProps {
@@ -52,7 +52,10 @@ export const StatusCard: React.FC<StatusCardProps> = ({ statusData }) => {
             <div className="status-card-icon" aria-hidden="true">
               <Calendar size={20} />
             </div>
-            <h4 className="status-card-title">Today's Routine</h4>
+            <div className="status-card-title-text">
+              <h4 className="status-card-title">Today's Routine</h4>
+              <span className="status-card-proto-label">Prototype Data</span>
+            </div>
           </div>
           <span className={`status-card-badge ${getBadgeClass(statusData.routineStatus)}`}>
             {formatStatusLabel(statusData.routineStatus)}
@@ -60,10 +63,6 @@ export const StatusCard: React.FC<StatusCardProps> = ({ statusData }) => {
         </div>
         <div className="status-card-body">
           {statusData.routineDetail}
-        </div>
-        <div className="status-card-disclaimer">
-          <Info size={14} aria-hidden="true" />
-          <span>Simulated senior schedule (mock data)</span>
         </div>
       </div>
 
@@ -74,7 +73,10 @@ export const StatusCard: React.FC<StatusCardProps> = ({ statusData }) => {
             <div className="status-card-icon" aria-hidden="true">
               <DoorClosed size={20} />
             </div>
-            <h4 className="status-card-title">Front Door Awareness</h4>
+            <div className="status-card-title-text">
+              <h4 className="status-card-title">Front Door Awareness</h4>
+              <span className="status-card-proto-label">Prototype Sensor</span>
+            </div>
           </div>
           <span className={`status-card-badge ${getBadgeClass(statusData.frontDoorStatus)}`}>
             {formatStatusLabel(statusData.frontDoorStatus)}
@@ -82,10 +84,6 @@ export const StatusCard: React.FC<StatusCardProps> = ({ statusData }) => {
         </div>
         <div className="status-card-body">
           {statusData.frontDoorDetail}
-        </div>
-        <div className="status-card-disclaimer">
-          <Info size={14} aria-hidden="true" />
-          <span>Simulated telemetry (no physical sensor or camera)</span>
         </div>
       </div>
 
@@ -96,7 +94,10 @@ export const StatusCard: React.FC<StatusCardProps> = ({ statusData }) => {
             <div className="status-card-icon" aria-hidden="true">
               <HeartHandshake size={20} />
             </div>
-            <h4 className="status-card-title">Caregiver Connection</h4>
+            <div className="status-card-title-text">
+              <h4 className="status-card-title">Caregiver Connection</h4>
+              <span className="status-card-proto-label">Prototype Notification</span>
+            </div>
           </div>
           <span className={`status-card-badge ${getBadgeClass(statusData.caregiverStatus)}`}>
             {formatStatusLabel(statusData.caregiverStatus)}
@@ -104,10 +105,6 @@ export const StatusCard: React.FC<StatusCardProps> = ({ statusData }) => {
         </div>
         <div className="status-card-body">
           {statusData.caregiverDetail}
-        </div>
-        <div className="status-card-disclaimer">
-          <Info size={14} aria-hidden="true" />
-          <span>Mock adapter (prototype notification log)</span>
         </div>
       </div>
     </aside>

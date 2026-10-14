@@ -42,7 +42,7 @@ export async function sendAssistantMessage(message: string): Promise<AssistantAp
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s client timeout
+    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s client timeout
 
     const response = await fetch('/api/assistant', {
       method: 'POST',

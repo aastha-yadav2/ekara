@@ -3,23 +3,23 @@ import {
   orchestrateUserRequest,
   executeToolAction,
   EKARA_SYSTEM_PROMPT,
-  EKARA_BEDROCK_TOOLS
+  EKARA_GEMINI_TOOLS
 } from "../src/services/orchestrator.js";
-import { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
-import { setBedrockRuntimeClient } from "../src/services/bedrock.js";
+import { GoogleGenAI } from "@google/genai";
+import { setGeminiClient } from "../src/services/gemini.js";
 
-describe("EKARA AI Orchestration Layer", () => {
+describe("EKARA AI Orchestration Layer (Google Gemini)", () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
-    process.env.AWS_REGION = "us-east-1";
-    process.env.BEDROCK_MODEL_ID = "anthropic.claude-3-haiku-20240307-v1:0";
-    setBedrockRuntimeClient(null);
+    process.env.GEMINI_API_KEY = "test-gemini-key";
+    process.env.GEMINI_MODEL = "gemini-2.5-flash";
+    setGeminiClient(null);
   });
 
   afterEach(() => {
     process.env = { ...originalEnv };
-    setBedrockRuntimeClient(null);
+    setGeminiClient(null);
   });
 
   describe("Safety Rules & System Instructions", () => {
@@ -36,8 +36,9 @@ describe("EKARA AI Orchestration Layer", () => {
       expect(EKARA_SYSTEM_PROMPT).toContain("Never claim to have contacted emergency services");
     });
 
-    it("should define valid Bedrock tool specifications matching MCP tools", () => {
-      const toolNames = EKARA_BEDROCK_TOOLS.map((t: any) => t.toolSpec.name);
+    it("should define valid Gemini tool specifications matching MCP tools", () => {
+      const toolDeclarations = EKARA_GEMINI_TOOLS[0].functionDeclarations;
+      const toolNames = toolDeclarations.map((t) => t.name);
       expect(toolNames).toContain("get_daily_schedule");
       expect(toolNames).toContain("check_front_door");
       expect(toolNames).toContain("notify_caregiver");
@@ -91,217 +92,154 @@ describe("EKARA AI Orchestration Layer", () => {
 
   describe("End-to-End Orchestration (orchestrateUserRequest)", () => {
     it("1. Schedule request: selects get_daily_schedule and returns structured response", async () => {
-      const mockSend = vi
+      const mockGenerateContent = vi
         .fn()
-        // Turn 1: Bedrock chooses get_daily_schedule
+        // Turn 1: Gemini chooses get_daily_schedule
         .mockResolvedValueOnce({
-          output: {
-            message: {
-              role: "assistant",
-              content: [
-                {
-                  toolUse: {
-                    toolUseId: "tool-sched-1",
-                    name: "get_daily_schedule",
-                    input: { date: "2026-10-09" }
-                  }
-                }
-              ]
+          text: "",
+          functionCalls: [
+            {
+              name: "get_daily_schedule",
+              args: { date: "2026-10-13" },
+              id: "tool-sched-1"
             }
-          },
-          stopReason: "tool_use"
+          ]
         })
-        // Turn 2: Bedrock summarizes schedule result
+        // Turn 2: Gemini summarizes schedule result
         .mockResolvedValueOnce({
-          output: {
-            message: {
-              role: "assistant",
-              content: [
-                {
-                  text: "You have two items on your schedule today: Morning blood pressure check at 8:30 AM and Physical therapy at 2:00 PM."
-                }
-              ]
-            }
-          },
-          stopReason: "end_turn"
+          text: "You have two items on your schedule today: Morning blood pressure check at 8:30 AM and Physical therapy at 2:00 PM.",
+          functionCalls: []
         });
 
-      const mockClient = { send: mockSend } as unknown as BedrockRuntimeClient;
+      const mockClient = {
+        models: { generateContent: mockGenerateContent }
+      } as unknown as GoogleGenAI;
 
       const result = await orchestrateUserRequest("What do I need to do today?", { client: mockClient });
 
       expect(result.success).toBe(true);
       expect(result.toolUsed).toBe("get_daily_schedule");
       expect(result.message).toContain("Morning blood pressure check");
-      expect(mockSend).toHaveBeenCalledTimes(2);
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
     });
 
     it("2. Front door request: selects check_front_door and returns simulated telemetry summary", async () => {
-      const mockSend = vi
+      const mockGenerateContent = vi
         .fn()
-        // Turn 1: Bedrock chooses check_front_door
+        // Turn 1: Gemini chooses check_front_door
         .mockResolvedValueOnce({
-          output: {
-            message: {
-              role: "assistant",
-              content: [
-                {
-                  toolUse: {
-                    toolUseId: "tool-door-1",
-                    name: "check_front_door",
-                    input: { location: "Front Porch" }
-                  }
-                }
-              ]
+          text: "",
+          functionCalls: [
+            {
+              name: "check_front_door",
+              args: { location: "Front Porch" },
+              id: "tool-door-1"
             }
-          },
-          stopReason: "tool_use"
+          ]
         })
-        // Turn 2: Bedrock summarizes front door telemetry
+        // Turn 2: Gemini summarizes front door telemetry
         .mockResolvedValueOnce({
-          output: {
-            message: {
-              role: "assistant",
-              content: [
-                {
-                  text: "According to simulated smart home telemetry, your front door is currently locked and no motion is currently detected."
-                }
-              ]
-            }
-          },
-          stopReason: "end_turn"
+          text: "According to simulated smart home telemetry, your front door is currently locked and no motion is currently detected.",
+          functionCalls: []
         });
 
-      const mockClient = { send: mockSend } as unknown as BedrockRuntimeClient;
+      const mockClient = {
+        models: { generateContent: mockGenerateContent }
+      } as unknown as GoogleGenAI;
 
       const result = await orchestrateUserRequest("Is anyone at my front door?", { client: mockClient });
 
       expect(result.success).toBe(true);
       expect(result.toolUsed).toBe("check_front_door");
       expect(result.message).toContain("simulated smart home telemetry");
-      expect(mockSend).toHaveBeenCalledTimes(2);
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
     });
 
     it("3. Caregiver request: selects notify_caregiver and returns mock adapter confirmation", async () => {
-      const mockSend = vi
+      const mockGenerateContent = vi
         .fn()
-        // Turn 1: Bedrock chooses notify_caregiver
+        // Turn 1: Gemini chooses notify_caregiver
         .mockResolvedValueOnce({
-          output: {
-            message: {
-              role: "assistant",
-              content: [
-                {
-                  toolUse: {
-                    toolUseId: "tool-care-1",
-                    name: "notify_caregiver",
-                    input: {
-                      caregiverName: "Daughter (Sarah)",
-                      contactId: "caregiver-family-app",
-                      message: "Dad asked for help.",
-                      priority: "medium"
-                    }
-                  }
-                }
-              ]
+          text: "",
+          functionCalls: [
+            {
+              name: "notify_caregiver",
+              args: {
+                caregiverName: "Daughter (Sarah)",
+                contactId: "caregiver-family-app",
+                message: "Dad asked for help.",
+                priority: "medium"
+              },
+              id: "tool-care-1"
             }
-          },
-          stopReason: "tool_use"
+          ]
         })
-        // Turn 2: Bedrock confirms mock notification queued
+        // Turn 2: Gemini confirms mock notification queued
         .mockResolvedValueOnce({
-          output: {
-            message: {
-              role: "assistant",
-              content: [
-                {
-                  text: "I have recorded your message for your daughter using the prototype mock notification adapter. Please note no live SMS was dispatched."
-                }
-              ]
-            }
-          },
-          stopReason: "end_turn"
+          text: "I have recorded your message for your daughter using the prototype mock notification adapter. Please note no live SMS was dispatched.",
+          functionCalls: []
         });
 
-      const mockClient = { send: mockSend } as unknown as BedrockRuntimeClient;
+      const mockClient = {
+        models: { generateContent: mockGenerateContent }
+      } as unknown as GoogleGenAI;
 
       const result = await orchestrateUserRequest("Tell my daughter that I need help.", { client: mockClient });
 
       expect(result.success).toBe(true);
       expect(result.toolUsed).toBe("notify_caregiver");
       expect(result.message).toContain("prototype mock notification adapter");
-      expect(mockSend).toHaveBeenCalledTimes(2);
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
     });
 
     it("4. Conversational request: answers conversationally without executing any tool", async () => {
-      const mockSend = vi.fn().mockResolvedValueOnce({
-        output: {
-          message: {
-            role: "assistant",
-            content: [
-              {
-                text: "Good morning! How are you doing today? Let me know if you need to check your schedule or front porch."
-              }
-            ]
-          }
-        },
-        stopReason: "end_turn"
+      const mockGenerateContent = vi.fn().mockResolvedValueOnce({
+        text: "Good morning! How are you doing today? Let me know if you need to check your schedule or front porch.",
+        functionCalls: []
       });
 
-      const mockClient = { send: mockSend } as unknown as BedrockRuntimeClient;
+      const mockClient = {
+        models: { generateContent: mockGenerateContent }
+      } as unknown as GoogleGenAI;
 
       const result = await orchestrateUserRequest("Good morning EKARA", { client: mockClient });
 
       expect(result.success).toBe(true);
       expect(result.toolUsed).toBeNull();
       expect(result.message).toContain("Good morning!");
-      expect(mockSend).toHaveBeenCalledTimes(1);
+      expect(mockGenerateContent).toHaveBeenCalledTimes(1);
     });
 
     it("5. Tool validation failure: handles tool argument errors gracefully in conversation turn", async () => {
-      const mockSend = vi
+      const mockGenerateContent = vi
         .fn()
-        // Turn 1: Bedrock chooses notify_caregiver with missing required fields
+        // Turn 1: Gemini chooses notify_caregiver with missing required fields
         .mockResolvedValueOnce({
-          output: {
-            message: {
-              role: "assistant",
-              content: [
-                {
-                  toolUse: {
-                    toolUseId: "tool-err-1",
-                    name: "notify_caregiver",
-                    input: { caregiverName: "" } // Invalid empty name, missing contactId and message
-                  }
-                }
-              ]
+          text: "",
+          functionCalls: [
+            {
+              name: "notify_caregiver",
+              args: { caregiverName: "" },
+              id: "tool-err-1"
             }
-          },
-          stopReason: "tool_use"
+          ]
         })
-        // Turn 2: Bedrock handles the error result and asks user for clarification
+        // Turn 2: Gemini handles the error result and asks user for clarification
         .mockResolvedValueOnce({
-          output: {
-            message: {
-              role: "assistant",
-              content: [
-                {
-                  text: "Could you please tell me which caregiver you would like to notify and what message you'd like to send?"
-                }
-              ]
-            }
-          },
-          stopReason: "end_turn"
+          text: "Could you please tell me which caregiver you would like to notify and what message you'd like to send?",
+          functionCalls: []
         });
 
-      const mockClient = { send: mockSend } as unknown as BedrockRuntimeClient;
+      const mockClient = {
+        models: { generateContent: mockGenerateContent }
+      } as unknown as GoogleGenAI;
 
       const result = await orchestrateUserRequest("Send a message", { client: mockClient });
 
       expect(result.success).toBe(true);
       expect(result.toolUsed).toBe("notify_caregiver");
       expect(result.message).toContain("which caregiver");
-      expect(mockSend).toHaveBeenCalledTimes(2);
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
     });
 
     it("6. Malformed request: rejects empty user message", async () => {

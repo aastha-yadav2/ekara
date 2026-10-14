@@ -73,7 +73,7 @@ app.get("/health", (req: Request, res: Response) => {
   });
 });
 
-// AI Assistant Endpoint (Phase 2 - Amazon Bedrock Orchestration)
+// AI Assistant Endpoint (Phase 2 - Google Gemini Orchestration)
 app.post("/api/assistant", async (req: Request, res: Response) => {
   try {
     const { message } = req.body || {};
@@ -96,15 +96,20 @@ app.post("/api/assistant", async (req: Request, res: Response) => {
     if (errorMessage.includes("Missing required environment variable") || errorMessage.includes("configuration")) {
       res.status(503).json({
         success: false,
-        error: "AI service is not configured. Please ensure AWS_REGION and BEDROCK_MODEL_ID are set."
+        error: "AI service is not configured. Please ensure GEMINI_API_KEY is set."
       });
       return;
     }
 
-    if (errorMessage.includes("AWS authentication failed") || errorMessage.includes("credentials")) {
+    if (
+      errorMessage.includes("authentication failed") ||
+      errorMessage.includes("GEMINI_API_KEY") ||
+      errorMessage.includes("credentials") ||
+      errorMessage.includes("API key")
+    ) {
       res.status(502).json({
         success: false,
-        error: "AI service authentication failure. Please check AWS credentials."
+        error: "AI service authentication failure. Please check Gemini API key."
       });
       return;
     }

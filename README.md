@@ -8,7 +8,7 @@ EKARA is a voice-first assistance platform primarily designed for older adults l
 
 EKARA is built in modular phases:
 1. **Phase 1: Backend Foundation (MCP Server)** — Model Context Protocol tools and streamable HTTP transport for daily schedule, simulated front door telemetry, and mock caregiver alerts.
-2. **Phase 2: Amazon Bedrock AI Orchestration** — AI orchestration layer using AWS Bedrock Runtime Converse API to understand natural language requests, select and validate EKARA tools, execute tool logic safely, and generate clear, senior-friendly voice responses.
+2. **Phase 2: Google Gemini AI Orchestration** — AI orchestration layer using the Google Gen AI SDK (`gemini-3.5-flash-lite`) to understand natural language requests, select and validate EKARA tools, execute tool logic safely, and generate clear, senior-friendly voice responses.
 3. **Phase 3: Alexa+ MCP Add-on Integration** — Scaffolding and protocol compliance enabling Alexa+ to connect directly to EKARA's Streamable HTTP MCP endpoint (`/mcp`), discover tools, and execute voice actions.
 
 ```
@@ -17,14 +17,14 @@ ekara/
 │   ├── addon.json             # Official Alexa+ add-on manifest
 │   └── README.md              # Alexa+ CLI deployment & tunneling instructions
 └── server/
-    ├── package.json           # Dependencies (@aws-sdk/client-bedrock-runtime, @modelcontextprotocol/sdk, express)
+    ├── package.json           # Dependencies (@google/genai, @modelcontextprotocol/sdk, express)
     ├── tsconfig.json          # TypeScript configuration (NodeNext)
-    ├── .env.example           # Environment template with AWS Bedrock configuration
+    ├── .env.example           # Environment template with Google Gemini configuration
     ├── .env                   # Local environment config (gitignored)
     ├── src/
     │   ├── index.ts           # Express server, /health, /mcp (Streamable HTTP), and /api/assistant
     │   ├── services/
-    │   │   ├── bedrock.ts     # Amazon Bedrock Runtime Converse API service client
+    │   │   ├── gemini.ts      # Google Gemini client and resilient error handling
     │   │   └── orchestrator.ts# AI orchestration layer (tool selection, validation, safety rules)
     │   ├── tools/
     │   │   ├── schedule.ts    # get_daily_schedule MCP tool
@@ -77,12 +77,12 @@ PORT=3000
 NODE_ENV=development
 HOST=0.0.0.0
 
-# Amazon Bedrock AI Orchestration (Phase 2)
-AWS_REGION=us-east-1
-BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
+# Google Gemini AI Orchestration (Phase 2)
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
-> **Security Note:** Real AWS credentials must never be committed to git. EKARA uses AWS SDK v3's standard credential provider chain (IAM role, AWS SSO, or local AWS credentials file).
+> **Security Note:** Real API keys must never be committed to git. EKARA loads credentials via environment variables and excludes `.env` via `.gitignore`.
 
 ---
 
