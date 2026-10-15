@@ -61,6 +61,21 @@ mcpServer.tool(
   async (args) => handleNotifyCaregiver(args)
 );
 
+// Root Endpoint
+app.get("/", (req: Request, res: Response) => {
+  res.status(200).json({
+    status: "ok",
+    message: "EKARA MCP Assistance Server is active and running.",
+    service: "EKARA MCP Assistance Server",
+    version: "1.0.0",
+    endpoints: {
+      health: "/health",
+      assistant: "POST /api/assistant",
+      mcp: "/mcp"
+    }
+  });
+});
+
 // Health Check Endpoint
 app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({

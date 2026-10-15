@@ -28,6 +28,8 @@ function mapHttpErrorToUserMessage(status: number, rawError?: string): string {
   }
 }
 
+const API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 /**
  * Sends a natural language request to the existing POST /api/assistant endpoint.
  */
@@ -44,7 +46,7 @@ export async function sendAssistantMessage(message: string): Promise<AssistantAp
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s client timeout
 
-    const response = await fetch('/api/assistant', {
+    const response = await fetch(`${API_BASE}/api/assistant`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -90,7 +92,7 @@ export async function sendAssistantMessage(message: string): Promise<AssistantAp
 
     return {
       success: false,
-      error: 'Cannot connect to EKARA server. Please ensure the backend is running at http://localhost:3000.'
+      error: 'Cannot connect to EKARA server. Please ensure the backend server is running.'
     };
   }
 }
@@ -103,7 +105,7 @@ export async function checkServerHealth(): Promise<ServerHealthResponse | null> 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-    const response = await fetch('/health', {
+    const response = await fetch(`${API_BASE}/health`, {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
       signal: controller.signal
